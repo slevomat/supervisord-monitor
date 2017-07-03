@@ -28,7 +28,7 @@
           <a class="brand" href="<?php echo site_url('');?>">Supervisord Admin</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-        <li><a href="<?php echo site_url();?>">Refresh <b id="refresh">(<?php echo $this->config->item('refresh');?>)</b> &nbsp;</a></li>
+        <li><a href="<?php echo site_url();?>">Refresh <b id="refresh"><?php if ($this->config->item('refresh') !== 0) { ?>(<?php echo $this->config->item('refresh');?>)<?php } ?></b> &nbsp;</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
