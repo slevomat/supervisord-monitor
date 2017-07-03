@@ -97,9 +97,6 @@
                 if($item['group'] != $item['name']) $item_name = $item['group'].":".$item['name'];
                 else $item_name = $item['name'];
 
-                $check = $CI->_request($name,'readProcessStderrLog',array($item_name,-1000,0));
-                if(is_array($check)) $check = print_r($check,1);
-
                 if(!is_array($item)){
                         // Not having array means that we have error.
                         echo '<tr><td colspan="4">'.$item.'</td></tr>';
@@ -121,15 +118,7 @@
                 $uptime = str_replace("uptime ","",$uptime);
                 ?>
                 <tr>
-                    <td class="name"><?php
-                        echo $item_name;
-                        if($check){
-                            $alert = true;
-                            echo '<span class="pull-right"><a href="'.site_url('/control/clear/'.$name.'/'.$item_name).'" id="'.$name.'_'.$item_name.
-                                    '" onclick="return false" data-toggle="popover" data-message="'.htmlspecialchars($check).'" data-original-title="'.
-                                    $item_name.'@'.$name.'" class="pop btn btn-mini btn-danger"><img src="/img/alert_icon.png" /></a></span>';
-                        }
-                        ?>
+                    <td class="name"><?php echo $item_name;?>
                     </td>
                     <td width="10"><span class="label label-<?php echo $class;?>"><?php echo $status;?></span></td>
                     <td width="80" style="text-align:right"><?php echo $uptime;?></td>
