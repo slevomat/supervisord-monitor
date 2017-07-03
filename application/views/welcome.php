@@ -57,8 +57,8 @@
                 <a href="<?php echo $ui_url; ?>"><?php echo $name; ?></a> <?php if($this->config->item('show_host')){ ?><i><?php echo $parsed_url['host']; ?></i><?php } ?>
                 <?php
                 if(isset($cfg[$name]['username'])){echo '<i class="icon-lock icon-green" style="color:blue" title="Authenticated server connection"></i>';}
-                echo '&nbsp;<i>'.$version[$name].'</i>';
                 if(!isset($procs['error'])){
+                    echo '&nbsp;<i>'.$version[$name].'</i>';
                 ?>
                 <span class="server-btns pull-right">
                     <a href="<?php echo site_url('/control/stopall/'.$name); ?>" class="btn btn-mini btn-inverse" type="button"><i class="icon-stop icon-white"></i> Stop all</a>
@@ -73,9 +73,6 @@
             $CI = &get_instance();
             foreach($procs as $item){
 
-                if($item['group'] != $item['name']) $item_name = $item['group'].":".$item['name'];
-                else $item_name = $item['name'];
-
                 if(!is_array($item)){
                         // Not having array means that we have error.
                         echo '<tr><td colspan="4">'.$item.'</td></tr>';
@@ -83,18 +80,21 @@
                         continue;
                 }
 
+                if($item['group'] != $item['name']) $item_name = $item['group'].":".$item['name'];
+                else $item_name = $item['name'];
+
                 $pid = $uptime = '&nbsp;';
                 $status = $item['statename'];
                 if($status=='RUNNING'){
                     $class = 'success';
                     list($pid,$uptime) = explode(",",$item['description']);
+                    $uptime = str_replace("uptime ","",$uptime);
                 }
                 elseif($status=='STARTING') $class = 'info';
                 elseif($status=='FATAL') { $class = 'important'; $alert = true; }
                 elseif($status=='STOPPED') $class = 'inverse';
                 else $class = 'error';
 
-                $uptime = str_replace("uptime ","",$uptime);
                 ?>
                 <tr>
                     <td class="name"><?php echo $item_name;?>
