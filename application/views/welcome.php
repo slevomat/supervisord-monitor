@@ -25,35 +25,14 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="brand" href="<?php echo site_url('');?>">Support Center</a>
+          <a class="brand" href="<?php echo site_url('');?>">Supervisord Admin</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-            <li class="active"><a href="<?php echo site_url();?>">Home</a></li>
-              <li><a href="?mute=<?php echo ($muted?-1:1);?>"><i class="icon-music icon-white"></i>&nbsp;<?php
-            if($muted){
-                echo "Unmute";
-            }else{
-                echo "Mute";
-            }
-        ;?></a></li>
         <li><a href="<?php echo site_url();?>">Refresh <b id="refresh">(<?php echo $this->config->item('refresh');?>)</b> &nbsp;</a></li>
-              <li><a href="mailto:martin@lazarov.bg">Contact</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
       </div>
-    </div>
-
-
-    <div class="container">
-
-        <?php
-        if($muted){
-            echo '<div class="row"><div class="span4 offset4 label label-important" style="padding:10px;margin-bottom:20px;text-align:center;">';
-            echo 'Sound muted for '.timespan(time(),$muted).' <span class="pull-right"><a href="?mute=-1" style="color:white;"><i class="icon-music icon-white"></i> Unmute</a></span></div></div>';
-        }
-
-        ?>
     </div>
     <?php
         $alert = false;
