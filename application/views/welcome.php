@@ -71,6 +71,17 @@
             </th></tr>
             <?php
             $CI = &get_instance();
+
+            usort($procs, function ($a, $b) {
+                if (!is_array($a)) {
+                    return -1;
+                }
+                if (!is_array($b)) {
+                    return -1;
+                }
+
+                return strcmp($a['name'], $b['name']);
+            });
             foreach($procs as $item){
 
                 if(!is_array($item)){
@@ -97,7 +108,7 @@
 
                 ?>
                 <tr>
-                    <td class="name"><?php echo $item_name;?>
+                    <td class="name"><?php echo $item['name'];?>
                     </td>
                     <td width="10"><span class="label label-<?php echo $class;?>"><?php echo $status;?></span></td>
                     <td width="80" style="text-align:right"><?php echo $uptime;?></td>
