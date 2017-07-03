@@ -14,6 +14,10 @@ body{
 	float: right;
 }
 
+.name {
+	word-break: break-all;
+}
+
 .actions a:not(:last-child) {
 	margin-right: 5px;
 }
@@ -28,7 +32,7 @@ body{
 	}
 	.span4 {
 		width: 545px;
-	}	
+	}
 }
 @media (min-width: 980px){
 	body {
