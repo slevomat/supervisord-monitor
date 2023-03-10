@@ -269,7 +269,7 @@ class CI_Security {
 		 */
 		if (is_array($str))
 		{
-			while (list($key) = each($str))
+            foreach ($str as $key => $value)
 			{
 				$str[$key] = $this->xss_clean($str[$key]);
 			}
@@ -609,7 +609,7 @@ class CI_Security {
 		if ($is_image === TRUE)
 		{
 			/*
-			 * Adobe Photoshop puts XML metadata into JFIF images, 
+			 * Adobe Photoshop puts XML metadata into JFIF images,
 			 * including namespacing, so we have to allow this for images.
 			 */
 			unset($evil_attributes[array_search('xmlns', $evil_attributes)]);

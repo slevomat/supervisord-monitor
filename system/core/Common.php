@@ -254,7 +254,9 @@ if ( ! function_exists('get_config'))
 			}
 		}
 
-		return $_config[0] =& $config;
+        $_config[0] =& $config;
+
+		return $_config;
 	}
 }
 
@@ -346,7 +348,7 @@ if ( ! function_exists('show_404'))
 */
 if ( ! function_exists('log_message'))
 {
-	function log_message($level = 'error', $message, $php_error = FALSE)
+	function log_message($level, $message, $php_error = FALSE)
 	{
 		static $_log;
 
@@ -514,16 +516,16 @@ if ( ! function_exists('remove_invisible_characters'))
 	function remove_invisible_characters($str, $url_encoded = TRUE)
 	{
 		$non_displayables = array();
-		
+
 		// every control character except newline (dec 10)
 		// carriage return (dec 13), and horizontal tab (dec 09)
-		
+
 		if ($url_encoded)
 		{
 			$non_displayables[] = '/%0[0-8bcef]/';	// url encoded 00-08, 11, 12, 14, 15
 			$non_displayables[] = '/%1[0-9a-f]/';	// url encoded 16-31
 		}
-		
+
 		$non_displayables[] = '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/S';	// 00-08, 11, 12, 14-31, 127
 
 		do

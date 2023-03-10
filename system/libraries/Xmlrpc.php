@@ -245,7 +245,7 @@ class CI_Xmlrpc {
 			}
 			elseif (is_array($value['0']) && ($value['1'] == 'struct' OR $value['1'] == 'array'))
 			{
-				while (list($k) = each($value['0']))
+                foreach ($value[0] as $k => $v)
 				{
 					$value['0'][$k] = $this->values_parsing($value['0'][$k], TRUE);
 				}
@@ -504,10 +504,10 @@ class XML_RPC_Response
 	function decode($array=FALSE)
 	{
 		$CI =& get_instance();
-		
+
 		if ($array !== FALSE && is_array($array))
 		{
-			while (list($key) = each($array))
+			foreach ($array as $key => $value)
 			{
 				if (is_array($array[$key]))
 				{
@@ -554,9 +554,8 @@ class XML_RPC_Response
 		}
 		elseif ($kind == 'array')
 		{
-			reset($xmlrpc_val->me);
-			list($a,$b) = each($xmlrpc_val->me);
-			$size = count($b);
+			$first = reset($xmlrpc_val->me);
+			$size = count($xmlrpc_val->me['array']);
 
 			$arr = array();
 
@@ -571,8 +570,7 @@ class XML_RPC_Response
 			reset($xmlrpc_val->me['struct']);
 			$arr = array();
 
-			while (list($key,$value) = each($xmlrpc_val->me['struct']))
-			{
+			foreach ($xmlrpc_val->me['struct'] as $key => $value) {
 				$arr[$key] = $this->xmlrpc_decoder($value);
 			}
 			return $arr;
@@ -701,14 +699,15 @@ class XML_RPC_Message extends CI_Xmlrpc
 		//-------------------------------------
 
 		$parser = xml_parser_create($this->xmlrpc_defencoding);
+		$parser_id = spl_object_hash($parser);
 
-		$this->xh[$parser]					= array();
-		$this->xh[$parser]['isf']			= 0;
-		$this->xh[$parser]['ac']			= '';
-		$this->xh[$parser]['headers']		= array();
-		$this->xh[$parser]['stack']			= array();
-		$this->xh[$parser]['valuestack']	= array();
-		$this->xh[$parser]['isf_reason']	= 0;
+		$this->xh[$parser_id]					= array();
+		$this->xh[$parser_id]['isf']			= 0;
+		$this->xh[$parser_id]['ac']			= '';
+		$this->xh[$parser_id]['headers']		= array();
+		$this->xh[$parser_id]['stack']			= array();
+		$this->xh[$parser_id]['valuestack']	= array();
+		$this->xh[$parser_id]['isf_reason']	= 0;
 
 		xml_set_object($parser, $this);
 		xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, true);
@@ -728,7 +727,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 			{
 				break;
 			}
-			$this->xh[$parser]['headers'][] = $line;
+			$this->xh[$parser_id]['headers'][] = $line;
 		}
 		$data = implode("\r\n", $lines);
 
@@ -737,7 +736,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 		//  PARSE XML DATA
 		//-------------------------------------
 
-		if ( ! xml_parse($parser, $data, count($data)))
+		if ( ! xml_parse($parser, $data, count($lines)))
 		{
 			$errstr = sprintf('XML error: %s at line %d',
 					xml_error_string(xml_get_error_code($parser)),
@@ -753,21 +752,21 @@ class XML_RPC_Message extends CI_Xmlrpc
 		//  Got Ourselves Some Badness, It Seems
 		// ---------------------------------------
 
-		if ($this->xh[$parser]['isf'] > 1)
+		if ($this->xh[$parser_id]['isf'] > 1)
 		{
 			if ($this->debug === TRUE)
 			{
 				echo "---Invalid Return---\n";
-				echo $this->xh[$parser]['isf_reason'];
+				echo $this->xh[$parser_id]['isf_reason'];
 				echo "---Invalid Return---\n\n";
 			}
 
-			$r = new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'],$this->xmlrpcstr['invalid_return'].' '.$this->xh[$parser]['isf_reason']);
+			$r = new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'],$this->xmlrpcstr['invalid_return'].' '.$this->xh[$parser_id]['isf_reason']);
 			return $r;
 		}
-		elseif ( ! is_object($this->xh[$parser]['value']))
+		elseif ( ! is_object($this->xh[$parser_id]['value']))
 		{
-			$r = new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'],$this->xmlrpcstr['invalid_return'].' '.$this->xh[$parser]['isf_reason']);
+			$r = new XML_RPC_Response(0, $this->xmlrpcerr['invalid_return'],$this->xmlrpcstr['invalid_return'].' '.$this->xh[$parser_id]['isf_reason']);
 			return $r;
 		}
 
@@ -779,10 +778,10 @@ class XML_RPC_Message extends CI_Xmlrpc
 		{
 			echo "<pre>";
 
-			if (count($this->xh[$parser]['headers'] > 0))
+			if (count($this->xh[$parser_id]['headers'] > 0))
 			{
 				echo "---HEADERS---\n";
-				foreach ($this->xh[$parser]['headers'] as $header)
+				foreach ($this->xh[$parser_id]['headers'] as $header)
 				{
 					echo "$header\n";
 				}
@@ -792,7 +791,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 			echo "---DATA---\n" . htmlspecialchars($data) . "\n---END DATA---\n\n";
 
 			echo "---PARSED---\n" ;
-			var_dump($this->xh[$parser]['value']);
+			var_dump($this->xh[$parser_id]['value']);
 			echo "\n---END PARSED---</pre>";
 		}
 
@@ -800,9 +799,9 @@ class XML_RPC_Message extends CI_Xmlrpc
 		//  SEND RESPONSE
 		//-------------------------------------
 
-		$v = $this->xh[$parser]['value'];
+		$v = $this->xh[$parser_id]['value'];
 
-		if ($this->xh[$parser]['isf'])
+		if ($this->xh[$parser_id]['isf'])
 		{
 			$errno_v = $v->me['struct']['faultCode'];
 			$errstr_v = $v->me['struct']['faultString'];
@@ -821,7 +820,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 			$r = new XML_RPC_Response($v);
 		}
 
-		$r->headers = $this->xh[$parser]['headers'];
+		$r->headers = $this->xh[$parser_id]['headers'];
 		return $r;
 	}
 
@@ -845,27 +844,29 @@ class XML_RPC_Message extends CI_Xmlrpc
 
 	function open_tag($the_parser, $name, $attrs)
 	{
+        $the_parser_id = spl_object_hash($the_parser);
+
 		// If invalid nesting, then return
-		if ($this->xh[$the_parser]['isf'] > 1) return;
+		if ($this->xh[$the_parser_id]['isf'] > 1) return;
 
 		// Evaluate and check for correct nesting of XML elements
 
-		if (count($this->xh[$the_parser]['stack']) == 0)
+		if (count($this->xh[$the_parser_id]['stack']) == 0)
 		{
 			if ($name != 'METHODRESPONSE' && $name != 'METHODCALL')
 			{
-				$this->xh[$the_parser]['isf'] = 2;
-				$this->xh[$the_parser]['isf_reason'] = 'Top level XML-RPC element is missing';
+				$this->xh[$the_parser_id]['isf'] = 2;
+				$this->xh[$the_parser_id]['isf_reason'] = 'Top level XML-RPC element is missing';
 				return;
 			}
 		}
 		else
 		{
 			// not top level element: see if parent is OK
-			if ( ! in_array($this->xh[$the_parser]['stack'][0], $this->valid_parents[$name], TRUE))
+			if ( ! in_array($this->xh[$the_parser_id]['stack'][0], $this->valid_parents[$name], TRUE))
 			{
-				$this->xh[$the_parser]['isf'] = 2;
-				$this->xh[$the_parser]['isf_reason'] = "XML-RPC element $name cannot be child of ".$this->xh[$the_parser]['stack'][0];
+				$this->xh[$the_parser_id]['isf'] = 2;
+				$this->xh[$the_parser_id]['isf_reason'] = "XML-RPC element $name cannot be child of ".$this->xh[$the_parser_id]['stack'][0];
 				return;
 			}
 		}
@@ -879,22 +880,22 @@ class XML_RPC_Message extends CI_Xmlrpc
 				$cur_val = array('value' => array(),
 								 'type'	 => $name);
 
-				array_unshift($this->xh[$the_parser]['valuestack'], $cur_val);
+				array_unshift($this->xh[$the_parser_id]['valuestack'], $cur_val);
 			break;
 			case 'METHODNAME':
 			case 'NAME':
-				$this->xh[$the_parser]['ac'] = '';
+				$this->xh[$the_parser_id]['ac'] = '';
 			break;
 			case 'FAULT':
-				$this->xh[$the_parser]['isf'] = 1;
+				$this->xh[$the_parser_id]['isf'] = 1;
 			break;
 			case 'PARAM':
-				$this->xh[$the_parser]['value'] = NULL;
+				$this->xh[$the_parser_id]['value'] = NULL;
 			break;
 			case 'VALUE':
-				$this->xh[$the_parser]['vt'] = 'value';
-				$this->xh[$the_parser]['ac'] = '';
-				$this->xh[$the_parser]['lv'] = 1;
+				$this->xh[$the_parser_id]['vt'] = 'value';
+				$this->xh[$the_parser_id]['ac'] = '';
+				$this->xh[$the_parser_id]['lv'] = 1;
 			break;
 			case 'I4':
 			case 'INT':
@@ -903,22 +904,22 @@ class XML_RPC_Message extends CI_Xmlrpc
 			case 'DOUBLE':
 			case 'DATETIME.ISO8601':
 			case 'BASE64':
-				if ($this->xh[$the_parser]['vt'] != 'value')
+				if ($this->xh[$the_parser_id]['vt'] != 'value')
 				{
 					//two data elements inside a value: an error occurred!
-					$this->xh[$the_parser]['isf'] = 2;
-					$this->xh[$the_parser]['isf_reason'] = "'Twas a $name element following a ".$this->xh[$the_parser]['vt']." element inside a single value";
+					$this->xh[$the_parser_id]['isf'] = 2;
+					$this->xh[$the_parser_id]['isf_reason'] = "'Twas a $name element following a ".$this->xh[$the_parser_id]['vt']." element inside a single value";
 					return;
 				}
 
-				$this->xh[$the_parser]['ac'] = '';
+				$this->xh[$the_parser_id]['ac'] = '';
 			break;
 			case 'MEMBER':
 				// Set name of <member> to nothing to prevent errors later if no <name> is found
-				$this->xh[$the_parser]['valuestack'][0]['name'] = '';
+				$this->xh[$the_parser_id]['valuestack'][0]['name'] = '';
 
 				// Set NULL value to check to see if value passed for this param/member
-				$this->xh[$the_parser]['value'] = NULL;
+				$this->xh[$the_parser_id]['value'] = NULL;
 			break;
 			case 'DATA':
 			case 'METHODCALL':
@@ -928,15 +929,15 @@ class XML_RPC_Message extends CI_Xmlrpc
 			break;
 			default:
 				/// An Invalid Element is Found, so we have trouble
-				$this->xh[$the_parser]['isf'] = 2;
-				$this->xh[$the_parser]['isf_reason'] = "Invalid XML-RPC element found: $name";
+				$this->xh[$the_parser_id]['isf'] = 2;
+				$this->xh[$the_parser_id]['isf_reason'] = "Invalid XML-RPC element found: $name";
 			break;
 		}
 
 		// Add current element name to stack, to allow validation of nesting
-		array_unshift($this->xh[$the_parser]['stack'], $name);
+		array_unshift($this->xh[$the_parser_id]['stack'], $name);
 
-		if ($name != 'VALUE') $this->xh[$the_parser]['lv'] = 0;
+		if ($name != 'VALUE') $this->xh[$the_parser_id]['lv'] = 0;
 	}
 	// END
 
@@ -947,25 +948,27 @@ class XML_RPC_Message extends CI_Xmlrpc
 
 	function closing_tag($the_parser, $name)
 	{
-		if ($this->xh[$the_parser]['isf'] > 1) return;
+	    $the_parser_id = spl_object_hash($the_parser);
+
+		if ($this->xh[$the_parser_id]['isf'] > 1) return;
 
 		// Remove current element from stack and set variable
 		// NOTE: If the XML validates, then we do not have to worry about
 		// the opening and closing of elements.  Nesting is checked on the opening
 		// tag so we be safe there as well.
 
-		$curr_elem = array_shift($this->xh[$the_parser]['stack']);
+		$curr_elem = array_shift($this->xh[$the_parser_id]['stack']);
 
 		switch($name)
 		{
 			case 'STRUCT':
 			case 'ARRAY':
-				$cur_val = array_shift($this->xh[$the_parser]['valuestack']);
-				$this->xh[$the_parser]['value'] = ( ! isset($cur_val['values'])) ? array() : $cur_val['values'];
-				$this->xh[$the_parser]['vt']	= strtolower($name);
+				$cur_val = array_shift($this->xh[$the_parser_id]['valuestack']);
+				$this->xh[$the_parser_id]['value'] = ( ! isset($cur_val['values'])) ? array() : $cur_val['values'];
+				$this->xh[$the_parser_id]['vt']	= strtolower($name);
 			break;
 			case 'NAME':
-				$this->xh[$the_parser]['valuestack'][0]['name'] = $this->xh[$the_parser]['ac'];
+				$this->xh[$the_parser_id]['valuestack'][0]['name'] = $this->xh[$the_parser_id]['ac'];
 			break;
 			case 'BOOLEAN':
 			case 'I4':
@@ -974,104 +977,104 @@ class XML_RPC_Message extends CI_Xmlrpc
 			case 'DOUBLE':
 			case 'DATETIME.ISO8601':
 			case 'BASE64':
-				$this->xh[$the_parser]['vt'] = strtolower($name);
+				$this->xh[$the_parser_id]['vt'] = strtolower($name);
 
 				if ($name == 'STRING')
 				{
-					$this->xh[$the_parser]['value'] = $this->xh[$the_parser]['ac'];
+					$this->xh[$the_parser_id]['value'] = $this->xh[$the_parser_id]['ac'];
 				}
 				elseif ($name=='DATETIME.ISO8601')
 				{
-					$this->xh[$the_parser]['vt']	= $this->xmlrpcDateTime;
-					$this->xh[$the_parser]['value'] = $this->xh[$the_parser]['ac'];
+					$this->xh[$the_parser_id]['vt']	= $this->xmlrpcDateTime;
+					$this->xh[$the_parser_id]['value'] = $this->xh[$the_parser_id]['ac'];
 				}
 				elseif ($name=='BASE64')
 				{
-					$this->xh[$the_parser]['value'] = base64_decode($this->xh[$the_parser]['ac']);
+					$this->xh[$the_parser_id]['value'] = base64_decode($this->xh[$the_parser_id]['ac']);
 				}
 				elseif ($name=='BOOLEAN')
 				{
 					// Translated BOOLEAN values to TRUE AND FALSE
-					if ($this->xh[$the_parser]['ac'] == '1')
+					if ($this->xh[$the_parser_id]['ac'] == '1')
 					{
-						$this->xh[$the_parser]['value'] = TRUE;
+						$this->xh[$the_parser_id]['value'] = TRUE;
 					}
 					else
 					{
-						$this->xh[$the_parser]['value'] = FALSE;
+						$this->xh[$the_parser_id]['value'] = FALSE;
 					}
 				}
 				elseif ($name=='DOUBLE')
 				{
 					// we have a DOUBLE
 					// we must check that only 0123456789-.<space> are characters here
-					if ( ! preg_match('/^[+-]?[eE0-9\t \.]+$/', $this->xh[$the_parser]['ac']))
+					if ( ! preg_match('/^[+-]?[eE0-9\t \.]+$/', $this->xh[$the_parser_id]['ac']))
 					{
-						$this->xh[$the_parser]['value'] = 'ERROR_NON_NUMERIC_FOUND';
+						$this->xh[$the_parser_id]['value'] = 'ERROR_NON_NUMERIC_FOUND';
 					}
 					else
 					{
-						$this->xh[$the_parser]['value'] = (double)$this->xh[$the_parser]['ac'];
+						$this->xh[$the_parser_id]['value'] = (double)$this->xh[$the_parser_id]['ac'];
 					}
 				}
 				else
 				{
 					// we have an I4/INT
 					// we must check that only 0123456789-<space> are characters here
-					if ( ! preg_match('/^[+-]?[0-9\t ]+$/', $this->xh[$the_parser]['ac']))
+					if ( ! preg_match('/^[+-]?[0-9\t ]+$/', $this->xh[$the_parser_id]['ac']))
 					{
-						$this->xh[$the_parser]['value'] = 'ERROR_NON_NUMERIC_FOUND';
+						$this->xh[$the_parser_id]['value'] = 'ERROR_NON_NUMERIC_FOUND';
 					}
 					else
 					{
-						$this->xh[$the_parser]['value'] = (int)$this->xh[$the_parser]['ac'];
+						$this->xh[$the_parser_id]['value'] = (int)$this->xh[$the_parser_id]['ac'];
 					}
 				}
-				$this->xh[$the_parser]['ac'] = '';
-				$this->xh[$the_parser]['lv'] = 3; // indicate we've found a value
+				$this->xh[$the_parser_id]['ac'] = '';
+				$this->xh[$the_parser_id]['lv'] = 3; // indicate we've found a value
 			break;
 			case 'VALUE':
 				// This if() detects if no scalar was inside <VALUE></VALUE>
-				if ($this->xh[$the_parser]['vt']=='value')
+				if ($this->xh[$the_parser_id]['vt']=='value')
 				{
-					$this->xh[$the_parser]['value']	= $this->xh[$the_parser]['ac'];
-					$this->xh[$the_parser]['vt']	= $this->xmlrpcString;
+					$this->xh[$the_parser_id]['value']	= $this->xh[$the_parser_id]['ac'];
+					$this->xh[$the_parser_id]['vt']	= $this->xmlrpcString;
 				}
 
 				// build the XML-RPC value out of the data received, and substitute it
-				$temp = new XML_RPC_Values($this->xh[$the_parser]['value'], $this->xh[$the_parser]['vt']);
+				$temp = new XML_RPC_Values($this->xh[$the_parser_id]['value'], $this->xh[$the_parser_id]['vt']);
 
-				if (count($this->xh[$the_parser]['valuestack']) && $this->xh[$the_parser]['valuestack'][0]['type'] == 'ARRAY')
+				if (count($this->xh[$the_parser_id]['valuestack']) && $this->xh[$the_parser_id]['valuestack'][0]['type'] == 'ARRAY')
 				{
 					// Array
-					$this->xh[$the_parser]['valuestack'][0]['values'][] = $temp;
+					$this->xh[$the_parser_id]['valuestack'][0]['values'][] = $temp;
 				}
 				else
 				{
 					// Struct
-					$this->xh[$the_parser]['value'] = $temp;
+					$this->xh[$the_parser_id]['value'] = $temp;
 				}
 			break;
 			case 'MEMBER':
-				$this->xh[$the_parser]['ac']='';
+				$this->xh[$the_parser_id]['ac']='';
 
 				// If value add to array in the stack for the last element built
-				if ($this->xh[$the_parser]['value'])
+				if ($this->xh[$the_parser_id]['value'])
 				{
-					$this->xh[$the_parser]['valuestack'][0]['values'][$this->xh[$the_parser]['valuestack'][0]['name']] = $this->xh[$the_parser]['value'];
+					$this->xh[$the_parser_id]['valuestack'][0]['values'][$this->xh[$the_parser_id]['valuestack'][0]['name']] = $this->xh[$the_parser_id]['value'];
 				}
 			break;
 			case 'DATA':
-				$this->xh[$the_parser]['ac']='';
+				$this->xh[$the_parser_id]['ac']='';
 			break;
 			case 'PARAM':
-				if ($this->xh[$the_parser]['value'])
+				if ($this->xh[$the_parser_id]['value'])
 				{
-					$this->xh[$the_parser]['params'][] = $this->xh[$the_parser]['value'];
+					$this->xh[$the_parser_id]['params'][] = $this->xh[$the_parser_id]['value'];
 				}
 			break;
 			case 'METHODNAME':
-				$this->xh[$the_parser]['method'] = ltrim($this->xh[$the_parser]['ac']);
+				$this->xh[$the_parser_id]['method'] = ltrim($this->xh[$the_parser_id]['ac']);
 			break;
 			case 'PARAMS':
 			case 'FAULT':
@@ -1091,22 +1094,24 @@ class XML_RPC_Message extends CI_Xmlrpc
 
 	function character_data($the_parser, $data)
 	{
-		if ($this->xh[$the_parser]['isf'] > 1) return; // XML Fault found already
+	    $the_parser_id = spl_object_hash($the_parser);
+
+		if ($this->xh[$the_parser_id]['isf'] > 1) return; // XML Fault found already
 
 		// If a value has not been found
-		if ($this->xh[$the_parser]['lv'] != 3)
+		if ($this->xh[$the_parser_id]['lv'] != 3)
 		{
-			if ($this->xh[$the_parser]['lv'] == 1)
+			if ($this->xh[$the_parser_id]['lv'] == 1)
 			{
-				$this->xh[$the_parser]['lv'] = 2; // Found a value
+				$this->xh[$the_parser_id]['lv'] = 2; // Found a value
 			}
 
-			if ( ! @isset($this->xh[$the_parser]['ac']))
+			if ( ! @isset($this->xh[$the_parser_id]['ac']))
 			{
-				$this->xh[$the_parser]['ac'] = '';
+				$this->xh[$the_parser_id]['ac'] = '';
 			}
 
-			$this->xh[$the_parser]['ac'] .= $data;
+			$this->xh[$the_parser_id]['ac'] .= $data;
 		}
 	}
 
@@ -1116,10 +1121,10 @@ class XML_RPC_Message extends CI_Xmlrpc
 	function output_parameters($array=FALSE)
 	{
 		$CI =& get_instance();
-		
+
 		if ($array !== FALSE && is_array($array))
 		{
-			while (list($key) = each($array))
+            foreach ($array as $key => $value)
 			{
 				if (is_array($array[$key]))
 				{
@@ -1169,7 +1174,8 @@ class XML_RPC_Message extends CI_Xmlrpc
 		elseif ($kind == 'array')
 		{
 			reset($param->me);
-			list($a,$b) = each($param->me);
+            $a = key($param->me);
+            $b = current($param->me);
 
 			$arr = array();
 
@@ -1186,7 +1192,7 @@ class XML_RPC_Message extends CI_Xmlrpc
 
 			$arr = array();
 
-			while (list($key,$value) = each($param->me['struct']))
+			foreach ($param->me['struct'] as $key => $value)
 			{
 				$arr[$key] = $this->decode_message($value);
 			}
@@ -1331,7 +1337,7 @@ class XML_RPC_Values extends CI_Xmlrpc
 				// struct
 				$rs .= "<struct>\n";
 				reset($val);
-				while (list($key2, $val2) = each($val))
+                foreach ($val as $key2 => $val2)
 				{
 					$rs .= "<member>\n<name>{$key2}</name>\n";
 					$rs .= $this->serializeval($val2);
@@ -1381,7 +1387,8 @@ class XML_RPC_Values extends CI_Xmlrpc
 		$ar = $o->me;
 		reset($ar);
 
-		list($typ, $val) = each($ar);
+        $typ = key($ar);
+        $val = current($ar);
 		$rs = "<value>\n".$this->serializedata($typ, $val)."</value>\n";
 		return $rs;
 	}
@@ -1389,7 +1396,8 @@ class XML_RPC_Values extends CI_Xmlrpc
 	function scalarval()
 	{
 		reset($this->me);
-		list($a,$b) = each($this->me);
+        $a = key($this->me);
+        $b = current($this->me);
 		return $b;
 	}
 

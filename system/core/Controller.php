@@ -27,6 +27,7 @@
  * @author		ExpressionEngine Dev Team
  * @link		http://codeigniter.com/user_guide/general/controllers.html
  */
+#[\AllowDynamicProperties]
 class CI_Controller {
 
 	private static $instance;
@@ -37,7 +38,7 @@ class CI_Controller {
 	public function __construct()
 	{
 		self::$instance =& $this;
-		
+
 		// Assign all the class objects that were instantiated by the
 		// bootstrap file (CodeIgniter.php) to local class variables
 		// so that CI can run as one big super object.
@@ -49,7 +50,7 @@ class CI_Controller {
 		$this->load =& load_class('Loader', 'core');
 
 		$this->load->initialize();
-		
+
 		log_message('debug', "Controller Class Initialized");
 	}
 
