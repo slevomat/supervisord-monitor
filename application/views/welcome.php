@@ -54,7 +54,7 @@
         <div class="span<?php echo ($this->config->item('supervisor_cols')==2?'6':'4');?>">
         <table class="table table-bordered table-condensed table-striped">
             <tr><th colspan="4">
-                <a href="<?php echo $ui_url; ?>"><?php echo $name; ?></a> <?php if($this->config->item('show_host')){ ?><i><?php echo $parsed_url['host']; ?></i><?php } ?>
+                <a href="<?php echo $ui_url; ?>"><?php echo $name . ' (' . count($procs) . 'x)'; ?></a> <?php if($this->config->item('show_host')){ ?><i><?php echo $parsed_url['host']; ?></i><?php } ?>
                 <?php
                 if(isset($cfg[$name]['username'])){echo '<i class="icon-lock icon-green" style="color:blue" title="Authenticated server connection"></i>';}
                 if(!isset($procs['error'])){
